@@ -79,6 +79,9 @@ def make_table(dest_unpacked: str | os.PathLike, headers: list, source_name: str
                        names = [i[1] for i in headers],
                        usecols=[i[0]-1 for i in headers],
                        dtype='str')
+    # take care of any leading or trailing whitespace
+    for col in df.columns:
+        df[col] = df[col].str.strip()
     return df
 
 def data_qc(database_dir: str | os.PathLike, new_tables: dict) -> list:
