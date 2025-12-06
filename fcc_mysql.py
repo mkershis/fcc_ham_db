@@ -404,7 +404,7 @@ def build_summary(db_conn_string):
             on hd.uid = en.uid
         ),
         cte1 as (
-            select *, row_number() over (partition by callsign order by effective_date) as recent_rn 
+            select *, row_number() over (partition by callsign order by effective_date desc) as recent_rn 
             from base_uid
         ),
         current_owner as (
