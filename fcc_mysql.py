@@ -454,9 +454,9 @@ def build_summary(db_conn_string):
         conn.commit()         
 
 def main():
-    # clean_temp_files(destination, dest_unpacked)
-    # get_database(url)
-    # unpack_data_files(destination, dest_unpacked)
+    clean_temp_files(destination, dest_unpacked)
+    get_database(url)
+    unpack_data_files(destination, dest_unpacked)
 
     database_schema = define_schema()
     database_tables = parse_data(dest_unpacked, database_schema)
