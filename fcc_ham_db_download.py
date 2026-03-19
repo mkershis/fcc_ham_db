@@ -1,3 +1,4 @@
+
 # This script downloads the full FCC ham radio database 
 # and creates a local SQLite copy along with some
 # additional tables which make the data a bit more 
@@ -8,6 +9,7 @@ from pathlib import Path
 import numpy as np 
 import pandas as pd
 import sqlite3
+import platform
 
 ##########################################################################################
 #                                                                                        #
@@ -62,6 +64,10 @@ def unpack_data_files(destination: str | os.PathLike, dest_unpacked: str | os.Pa
             os.makedirs(dest_unpacked, exist_ok=True)
             zip_ref.extractall(dest_unpacked)
         print(f'{destination} extracted to "{dest_unpacked}"')
+        # fix a linux-specific bug in the filenames
+        if platform.system() == 'Linux':
+            for f in Path(dest_unpacked).glob('*.dat'):
+                f.rename(f.with_suffix('.DAT'))
     except zipfile.BadZipFile:
         print(f'Error: {destination} is not a valid zip file')
     except FileNotFoundError:
