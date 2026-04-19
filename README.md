@@ -16,8 +16,3 @@ Detailed information about the database schema and defintitions can be found [he
 
 * `destination_string` - this should be the full path and filename of where you want to temporarily download the raw datafiles before building the SQL database. An example might be `.../Downloads/ham.zip`
 * `database_dir_string` - this should be full path of the SQLite database you wish to create. It should point to a prefered location on your machine and should end in .db. An example might be `...\<directory_for_your_database>\fcc_ham.db`
-
-### Support for MySQL users
-The script `fcc_mysql.py` can be used to accomplish the same thing using MySQL. Compared to the original script, this version is more explicit about defining the data types per official FCC documentation. It also does a bit more as far as data quality checking (replacing any bad data with nulls) and creating indexes on `uid` and `callsign` to improve performance.
-
-Creation of a summary table is included, although I dropped the `current_uid`, `op_class_map`, `row_counts`,`status_map`, and `last_update` tables in this version. Instead, the tables are checked within the script to determine if they should be overwritten or not.
