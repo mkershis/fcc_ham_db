@@ -13,6 +13,8 @@ import pandas as pd
 import sqlite3
 import platform
 from tqdm import tqdm
+import tomllib
+from platformdirs import user_downloads_dir
 
 
 def clean_temp_files(destination: str | os.PathLike, dest_unpacked: str | os.PathLike) -> None:
@@ -57,20 +59,6 @@ def get_database(url: str, destination: str | os.PathLike, retries: int = 3) -> 
             print(f'Error downloading file: {e}')
             break  # non-timeout errors are unlikely to resolve with a retry
     print()
-
-# def get_database(url: str, destination: str | os.PathLike) -> None:
-#     '''Sends web request to get the raw .zip file from the FCC'''
-#     print(f'Starting file download from: {url}')
-#     try:
-#         response = requests.get(url, stream=True)
-#         response.raise_for_status()
-#         with open(destination, 'wb') as f:
-#             for chunk in response.iter_content(chunk_size=8192):
-#                 f.write(chunk)
-#             print(f'Compressed FCC database files downloaded to "{destination}"')
-#     except requests.exceptions.RequestException as e:
-#         print(f'Error downloading file: {e}')
-#     print()
 
 def unpack_data_files(destination: str | os.PathLike, dest_unpacked: str | os.PathLike) -> None:
     '''Unpacks the .zip file so we can access the files'''
@@ -594,26 +582,35 @@ def build_database(database_dir: str | os.PathLike, database_tables: dict, datab
 
             print('\trow_counts table complete')
 
+def load_config(config_filename: str = 'config.toml') -> dict:
+    '''Sets paths for data download and final database file'''
+
+    try:
+        with open(config_filename,'rb') as f:
+            config = tomllib.load(f)
+    except FileNotFoundError:
+        config = {
+            'download_destination' : str(user_downloads_dir()),
+            'database_location' : str(Path.home())
+        }
+        print('config.toml file not found')
+        print(f'Raw data will be downloaded to --> {config["download_destination"]}')
+        print(f'Final database file will be written to --> {config["database_location"]}')
+    
+    return config
+
+
 def main():
 
     # FCC URL should be stable, but other two are system specfic to the user
     url = 'https://data.fcc.gov/download/pub/uls/complete/l_amat.zip'
 
-    # define path and filename where the .zip file should go
-    # e.g. .../Downloads/ham.zip
-    destination_string = '/home/matt/Downloads/ham.zip'
-
-    # define path for your SQLite database file
-    # e.g. .../fcc_ham.db
-    database_dir_string = '/home/matt/fcc_ham.db'
-
-
-    dest_unpacked_string = destination_string.replace('.zip','') 
-
-    # leverage pathlib so this script works across platforms
-    destination = Path(destination_string)
-    dest_unpacked = Path(dest_unpacked_string)
-    database_dir = Path(database_dir_string)
+    #read filepaths from config file
+    config = load_config()
+    
+    destination = Path(config['download_destination'], 'ham.zip')
+    dest_unpacked = Path(config['download_destination'], 'ham')
+    database_dir = Path(config['database_location'], 'fcc_ham.db')
 
     clean_temp_files(destination, dest_unpacked)
     get_database(url, destination)

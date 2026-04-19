@@ -12,7 +12,13 @@ Detailed information about the database schema and defintitions can be found [he
 * `row_counts` - saves row counts for the current database load. This table will be queried upon re-running the script to ensure that we only write tables if the record counts are greater than or equal to the current table size
 * `last_update` - stores a single date reflecting when the database was last built
 
-**IMPORTANT:** Before running the script for the first time, open the file and add values for the following paths which are specific to your system:
+**IMPORTANT:** Before running the script for the first time, you should create a `config.toml` file and place it in the same directory as this script. The contents of the file should be as follows:
 
-* `destination_string` - this should be the full path and filename of where you want to temporarily download the raw datafiles before building the SQL database. An example might be `.../Downloads/ham.zip`
-* `database_dir_string` - this should be full path of the SQLite database you wish to create. It should point to a prefered location on your machine and should end in .db. An example might be `...\<directory_for_your_database>\fcc_ham.db`
+```
+download_destination = "<<path where you want the data downloaded>>"
+database_location = "<<directory where you want the database>>"
+```
+
+The `download_destination` is where the script will download the .zip file from the FCC and is also where the contents will be unpacked. The .zip file will be called `ham.zip` and will be simply unzipped to a folder called `ham`. Similarly the `database_location` is where the script will write the final database file called `fcc_ham.db`.
+
+Now, if you do not create a config.toml file, then the script will default to downloading the raw data to your Downloads folder and will save the database to your home directory. You can always move this around later if you want. Note that, as of this writing in April 2026, the FCC database file is over 1.2 GB in size, so make sure you have enough disk space wherever you decide to save it.
