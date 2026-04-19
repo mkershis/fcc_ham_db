@@ -12,6 +12,7 @@ from pathlib import Path
 import pandas as pd
 import sqlite3
 import platform
+from tqdm import tqdm
 
 
 def clean_temp_files(destination: str | os.PathLike, dest_unpacked: str | os.PathLike) -> None:
@@ -21,19 +22,55 @@ def clean_temp_files(destination: str | os.PathLike, dest_unpacked: str | os.Pat
     if os.path.isfile(destination):
         os.remove(destination)
 
-def get_database(url: str, destination: str | os.PathLike) -> None:
+def get_database(url: str, destination: str | os.PathLike, retries: int = 3) -> None:
     '''Sends web request to get the raw .zip file from the FCC'''
     print(f'Starting file download from: {url}')
-    try:
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
-        with open(destination, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+    
+    for attempt in range(1, retries + 1):
+        try:
+            response = requests.get(url, stream=True, timeout=(10, 30))
+            # timeout=(connect_timeout, read_timeout)
+            # 10s to establish connection, 30s max between chunks
+            response.raise_for_status()
+            
+            total_size = int(response.headers.get('content-length', 0))
+            
+            with open(destination, 'wb') as f, tqdm(
+                total=total_size,
+                unit='B',
+                unit_scale=True,
+                unit_divisor=1024,
+                desc=f'Downloading (attempt {attempt}/{retries})'
+            ) as progress:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+                    progress.update(len(chunk))
+                    
             print(f'Compressed FCC database files downloaded to "{destination}"')
-    except requests.exceptions.RequestException as e:
-        print(f'Error downloading file: {e}')
+            return  # success, exit the function
+            
+        except requests.exceptions.Timeout:
+            print(f'Attempt {attempt}/{retries} timed out.')
+            if attempt == retries:
+                print('Download failed after all retries.')
+        except requests.exceptions.RequestException as e:
+            print(f'Error downloading file: {e}')
+            break  # non-timeout errors are unlikely to resolve with a retry
     print()
+
+# def get_database(url: str, destination: str | os.PathLike) -> None:
+#     '''Sends web request to get the raw .zip file from the FCC'''
+#     print(f'Starting file download from: {url}')
+#     try:
+#         response = requests.get(url, stream=True)
+#         response.raise_for_status()
+#         with open(destination, 'wb') as f:
+#             for chunk in response.iter_content(chunk_size=8192):
+#                 f.write(chunk)
+#             print(f'Compressed FCC database files downloaded to "{destination}"')
+#     except requests.exceptions.RequestException as e:
+#         print(f'Error downloading file: {e}')
+#     print()
 
 def unpack_data_files(destination: str | os.PathLike, dest_unpacked: str | os.PathLike) -> None:
     '''Unpacks the .zip file so we can access the files'''
@@ -343,7 +380,7 @@ def parse_data(dest_unpacked: str | os.PathLike, schema: dict) -> dict:
     tables_to_clean = ['EN','HD','HS','LA','SC','SF']
     database_tables = {}
 
-    for table_name in table_list:
+    for table_name in tqdm(table_list, desc='Reading data from files'):
         table = make_table(dest_unpacked, headers=schema[table_name], source_name=f'{table_name}.DAT')
         if table_name in tables_to_clean:
             table = clean_data(table)
@@ -529,19 +566,33 @@ def build_database(database_dir: str | os.PathLike, database_tables: dict, datab
 
     with sqlite3.connect(database_dir) as conn:
 
-        for script in create_scripts:
+        for script in tqdm(create_scripts, desc='Running table create scripts (if they don\'t exist)'):
             conn.execute(script)
-        for table_name, table in database_tables.items():
+        for table_name, table in tqdm(database_tables.items(), desc='Writing data to tables'):
             if table_name in tables_to_update:
                 table.to_sql(table_name, conn, if_exists='replace',dtype=dtype_schemas[table_name],index=False)
 
         # no need to rebuild these tables if we didn't overwrite any source tables
         if len(tables_to_update) > 0:
+            print('Creating dimension tables')
             make_dimension_tables(conn)
+
+            print('\tDimension tables complete.')
+
+            print('Creating current_uid_table')
             make_current_uid_table(conn)
+
+            print('\tcurrent_uid_table complete')
+
+            print('Creating ham_summary table')
             make_ham_summary_table(conn)
 
+            print('\tham_summary table complete')
+
+            print('Creating row_counts table')
             make_stats_table(conn)
+
+            print('\trow_counts table complete')
 
 def main():
 
