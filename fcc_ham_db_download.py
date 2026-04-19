@@ -4,37 +4,15 @@
 # additional tables which make the data a bit more 
 # user friendly to browse. 
 
-import requests, zipfile, os, shutil
+import requests
+import zipfile
+import os
+import shutil
 from pathlib import Path
-import numpy as np 
 import pandas as pd
 import sqlite3
 import platform
 
-##########################################################################################
-#                                                                                        #
-#                     Variables to Edit Before Running                                   #
-#                                                                                        #
-##########################################################################################
-
-# FCC URL should be stable, but other two are system specfic to the user
-url = 'https://data.fcc.gov/download/pub/uls/complete/l_amat.zip'
-
-# define path and filename where the .zip file should go
-# e.g. .../Downloads/ham.zip
-destination_string = ''
-
-# define path for your SQLite database file
-# e.g. .../fcc_ham.db
-database_dir_string = ''
-
-
-dest_unpacked_string = destination_string.replace('.zip','') 
-
-# leverage pathlib so this script works across platforms
-destination = Path(destination_string)
-dest_unpacked = Path(dest_unpacked_string)
-database_dir = Path(database_dir_string)
 
 def clean_temp_files(destination: str | os.PathLike, dest_unpacked: str | os.PathLike) -> None:
     '''Do a little housekeeping to remove old versions of these files'''
@@ -43,7 +21,7 @@ def clean_temp_files(destination: str | os.PathLike, dest_unpacked: str | os.Pat
     if os.path.isfile(destination):
         os.remove(destination)
 
-def get_database(url: str) -> None:
+def get_database(url: str, destination: str | os.PathLike) -> None:
     '''Sends web request to get the raw .zip file from the FCC'''
     print(f'Starting file download from: {url}')
     try:
@@ -96,7 +74,7 @@ def data_qc(database_dir: str | os.PathLike, new_tables: dict) -> list:
         # extract current record counts and immediately make a dictionary of them
         try:
             current_counts = pd.read_sql('select * from row_counts',conn).to_dict(orient='records')[0]
-        except:
+        except (pd.io.sql.DatabaseError, sqlite3.OperationalError):
             # most likely exception is a database error if row_counts doesn't exist
             # make an empty dict and make sure all tables are created
             current_counts = {}
@@ -143,7 +121,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
             df[col] = df[col].str.title()
         if col == 'state':
             df[col] = df[col].str.upper()
-        if col[-5:] == '_date':
+        if col.endswith('_date'):
             df[col] = pd.to_datetime(df[col],format='%m/%d/%Y',errors='coerce')
 
     return df
@@ -155,11 +133,11 @@ def make_create_scripts(schema: dict) -> list:
         script = f''' 
         CREATE TABLE IF NOT EXISTS {table_name}(
         '''
-        for row_number,column_name,data_type in schema_list:
-            new_line = f'{column_name} {data_type}\n'
-            script += new_line
-        script += ')'
+
+        columns = ',\n'.join([f'{col} {dtype}' for _,col,dtype in schema_list])
+        script += columns + ')'
         create_scripts.append(script)
+
     return create_scripts
 
 def define_schema() -> dict:
@@ -267,7 +245,7 @@ def define_schema() -> dict:
     [25,'fixed','TEXT'],
     [26,'mobile','TEXT'],
     [27,'radiolocation','TEXT'],
-    [28,'satelite','TEXT'],
+    [28,'satellite','TEXT'],
     [29,'dev_sta_demo','TEXT'],
     [30,'interconn_service','TEXT'],
     [31,'certifier_first_name','TEXT'],
@@ -360,37 +338,17 @@ def define_schema() -> dict:
 
 def parse_data(dest_unpacked: str | os.PathLike, schema: dict) -> dict:
     '''Creates pandas dataframe for each table and returns them as a dictionary of dataframes'''
+    
+    table_list = ['AM','CO','EN','HD','HS','LA','SC','SF']
+    tables_to_clean = ['EN','HD','HS','LA','SC','SF']
     database_tables = {}
 
-    AM = make_table(dest_unpacked, headers=schema['AM'], source_name='AM.DAT')
-    database_tables['AM'] = AM
+    for table_name in table_list:
+        table = make_table(dest_unpacked, headers=schema[table_name], source_name=f'{table_name}.DAT')
+        if table_name in tables_to_clean:
+            table = clean_data(table)
+        database_tables[table_name] = table
 
-    CO = make_table(dest_unpacked, headers=schema['CO'], source_name = 'CO.DAT')
-    database_tables['CO'] = CO
-
-    EN = make_table(dest_unpacked, headers=schema['EN'], source_name='EN.DAT')
-    EN = clean_data(EN)
-    database_tables['EN'] = EN
-
-    HD = make_table(dest_unpacked, headers=schema['HD'],source_name='HD.DAT')
-    HD = clean_data(HD)
-    database_tables['HD'] = HD
-
-    HS = make_table(dest_unpacked, headers=schema['HS'], source_name='HS.DAT')
-    HS = clean_data(HS)
-    database_tables['HS']=HS
-
-    LA = make_table(dest_unpacked,headers=schema['LA'], source_name = 'LA.DAT')
-    LA = clean_data(LA)
-    database_tables['LA'] = LA
-
-    SC = make_table(dest_unpacked, headers=schema['SC'],source_name = 'SC.DAT')
-    SC = clean_data(SC)
-    database_tables['SC'] = SC
-
-    SF = make_table(dest_unpacked, headers=schema['SF'], source_name = 'SF.DAT')
-    SF = clean_data(SF)
-    database_tables['SF'] = SF
     return database_tables
 
 def make_current_uid_table(conn, table_name: str = 'current_uid') -> None:
@@ -474,7 +432,7 @@ def make_ham_summary_table(conn, table_name: str ='ham_summary') -> None:
             '''        
         )
     else:
-        print('"current_uid" table does not exist. Cannot create ham_summary table')
+        raise RuntimeError('"current_uid" table does not exist. Cannot create ham_summary table')
 def make_dimension_tables(conn) -> None:
     '''
     Creates dimension tables to map 1-letter
@@ -586,8 +544,28 @@ def build_database(database_dir: str | os.PathLike, database_tables: dict, datab
             make_stats_table(conn)
 
 def main():
+
+    # FCC URL should be stable, but other two are system specfic to the user
+    url = 'https://data.fcc.gov/download/pub/uls/complete/l_amat.zip'
+
+    # define path and filename where the .zip file should go
+    # e.g. .../Downloads/ham.zip
+    destination_string = '/home/matt/Downloads/ham.zip'
+
+    # define path for your SQLite database file
+    # e.g. .../fcc_ham.db
+    database_dir_string = '/home/matt/fcc_ham.db'
+
+
+    dest_unpacked_string = destination_string.replace('.zip','') 
+
+    # leverage pathlib so this script works across platforms
+    destination = Path(destination_string)
+    dest_unpacked = Path(dest_unpacked_string)
+    database_dir = Path(database_dir_string)
+
     clean_temp_files(destination, dest_unpacked)
-    get_database(url)
+    get_database(url, destination)
     unpack_data_files(destination, dest_unpacked)
 
     database_schema = define_schema()
@@ -598,5 +576,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
