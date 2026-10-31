@@ -1,0 +1,25 @@
+# Amateur table (AM.DAT)
+table = "am"
+source_file = "AM.DAT"
+indexes = ["uid", "callsign", "trustee_callsign"]
+
+columns = [
+  {pos = 1, name = "record_type", type = "char(2)"},
+  {pos = 2, name = "uid", type = "numeric(9,0)"},
+  {pos = 3, name = "uls_file_number", type = "char(14)"},
+  {pos = 4, name = "ebf_number", type = "varchar(30)"},
+  {pos = 5, name = "callsign", type = "char(10)"},
+  {pos = 6, name = "operator_class", type = "char(1)"},
+  {pos = 7, name = "group_code", type = "char(1)"},
+  {pos = 8, name = "region_code", type = "int"},
+  {pos = 9, name = "trustee_callsign", type = "char(10)"},
+  {pos = 10, name = "trustee_indicator", type = "char(1)"},
+  {pos = 11, name = "physician_certification", type = "char(1)"},
+  {pos = 12, name = "ve_signature", type = "char(1)"},
+  {pos = 13, name = "systematic_callsign_change", type = "char(1)"},
+  {pos = 14, name = "vanity_callsign_change", type = "char(1)"},
+  {pos = 15, name = "vanity_relationship", type = "char(12)"},
+  {pos = 16, name = "previous_callsign", type = "char(10)"},
+  {pos = 17, name = "previous_operator_class", type = "char(1)"},
+  {pos = 18, name = "trustee_name", type = "varchar(50)"},
+]

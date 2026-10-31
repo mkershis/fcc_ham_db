@@ -1,0 +1,28 @@
+# Settings for fcc_ham_db.py. Paths are relative to this file.
+
+[fcc]
+# FCC URL should be stable
+url = "https://data.fcc.gov/download/pub/uls/complete/l_amat.zip"
+
+[paths]
+work_dir   = "data"     # the zip is downloaded here and unpacked beside it
+schema_dir = "schema"   # one TOML control file per table
+sql_dir    = "sql"      # setup/, silver/, gold/ scripts run in filename order; queries/ run on demand
+
+[database]
+path = "data/fcc_ham.db"   # the SQLite file; it is created if it doesn't exist
+
+[download]
+max_retries     = 3
+connect_timeout = 10    # seconds to establish the connection
+read_timeout    = 60    # seconds allowed between chunks of data
+
+[load]
+chunksize        = 50000   # rows read and inserted at a time
+# false = keep the existing bronze table if the new data has fewer rows (guards against a truncated download)
+allow_fewer_rows = false
+
+[silver]
+# Log values that don't fit their declared type in silver_dq_rejects.
+# Set to false to skip the logging pass and build faster.
+log_rejects = true

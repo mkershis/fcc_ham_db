@@ -18,7 +18,6 @@ build/
 # Secrets and local config
 .env
 *.env
-config.toml
 secrets.*
 
 # Jupyter
@@ -47,4 +46,7 @@ Thumbs.db
 # *.csv
 # *.parquet
 # *.zip
-# *.db
+*.db
+# Local data and databases
+data/
+*.db
