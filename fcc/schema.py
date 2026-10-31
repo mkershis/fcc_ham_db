@@ -5,7 +5,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-CLEAN_RULES = ('title', 'upper')
+CLEAN_RULES = ('title', 'upper', 'zip5')
 TEXT_KINDS = ('char', 'varchar')
 
 
@@ -42,7 +42,7 @@ class Column:
     pos: int  # 1-based field position in the pipe-delimited file
     name: str
     type: ColumnType
-    clean: str | None = None  # optional text normalisation applied in silver: "title" or "upper"
+    clean: str | None = None  # optional text rule applied in silver: "title", "upper" or "zip5"
 
 
 @dataclass(frozen=True)

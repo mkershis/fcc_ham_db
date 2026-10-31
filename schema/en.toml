@@ -22,7 +22,7 @@ columns = [
   {pos = 16, name = "address", type = "varchar(60)"},
   {pos = 17, name = "city", type = "varchar(20)", clean = "title"},
   {pos = 18, name = "state", type = "char(2)", clean = "upper"},
-  {pos = 19, name = "zip_code", type = "char(9)"},
+  {pos = 19, name = "zip_code", type = "char(9)", clean = "zip5"},
   {pos = 20, name = "po_box", type = "varchar(20)"},
   {pos = 21, name = "attn_line", type = "varchar(35)"},
   {pos = 22, name = "sgin", type = "char(3)"},

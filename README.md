@@ -41,7 +41,7 @@ Use `--config path/to/other.toml` to run with a different configuration.
 
 ## Extending
 - **Change a table:** edit its control file in `schema/` (`pos`, `name`, `type`; types: `char(n)`, `varchar(n)`, `numeric(p,s)`, `date`, `int`). Add a file to add a table. Bronze and silver are both generated from it. List columns in `indexes` to index them in silver.
-- **Normalise a text column in silver:** add `clean = "title"` or `clean = "upper"` to the column.
+- **Normalise a text column in silver:** add `clean = "title"` or `clean = "upper"` to the column. `clean = "zip5"` is a validating rule for ZIP codes: 5 characters pass as is, 9 (ZIP+4) are cut to the first 5, and any other length is set to NULL and logged in `silver_dq_rejects`.
 - **Add a table, view or transform:** drop a new `NNN_name.sql` in `sql/gold/` (or `sql/silver/` for extra silver transforms that run after the tables are built). Scripts run in filename order, each in one transaction, and need no changes to the Python code. Statements end with `;`. Make scripts re-runnable (`DROP ... IF EXISTS` first, or `CREATE ... IF NOT EXISTS`).
 - `sql/setup/` runs before everything (currently the data-quality log table).
 
