@@ -9,7 +9,7 @@ SELECT
         ELSE entity_name END AS name
     ,city || ', ' || UPPER(state) AS location
     ,operator_class AS operator_class
-    ,CASE WHEN expired_date <= DATE('now')
-            OR cancellation_date <= DATE('now')
+    ,CASE WHEN expired_date <= DATE('now', 'localtime')
+            OR cancellation_date <= DATE('now', 'localtime')
         THEN 'Expired' ELSE 'Active' END AS license_status
 FROM gold_summary;

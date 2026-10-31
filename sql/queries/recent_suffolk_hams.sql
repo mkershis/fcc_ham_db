@@ -18,6 +18,6 @@ AND zip_code IN (
     '11963', '11964', '11965', '11967', '11968', '11969', '11970', '11971',
     '11972', '11975', '11976', '11977', '11978', '11980'
 )
-AND JULIANDAY(DATE('now')) - JULIANDAY(grant_date) <= :days_back
+AND JULIANDAY(DATE('now', 'localtime')) - JULIANDAY(grant_date) <= :days_back
 AND cancellation_date IS NULL
 ORDER BY city ASC, grant_date DESC;
