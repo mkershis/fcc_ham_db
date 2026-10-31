@@ -1,0 +1,37 @@
+# Entity table (EN.DAT)
+table = "en"
+source_file = "EN.DAT"
+indexes = ["uid", "callsign"]
+
+columns = [
+  {pos = 1, name = "record_type", type = "char(2)"},
+  {pos = 2, name = "uid", type = "numeric(9,0)"},
+  {pos = 3, name = "uls_file_number", type = "char(14)"},
+  {pos = 4, name = "ebf_number", type = "varchar(30)"},
+  {pos = 5, name = "callsign", type = "char(10)"},
+  {pos = 6, name = "entity_type", type = "char(2)"},
+  {pos = 7, name = "licensee_id", type = "char(9)"},
+  {pos = 8, name = "entity_name", type = "varchar(200)"},
+  {pos = 9, name = "first_name", type = "varchar(20)", clean = "title"},
+  {pos = 10, name = "middle_initial", type = "char(1)"},
+  {pos = 11, name = "last_name", type = "varchar(20)", clean = "title"},
+  {pos = 12, name = "suffix", type = "char(3)"},
+  {pos = 13, name = "phone", type = "char(10)"},
+  {pos = 14, name = "fax", type = "char(10)"},
+  {pos = 15, name = "email", type = "varchar(50)"},
+  {pos = 16, name = "address", type = "varchar(60)"},
+  {pos = 17, name = "city", type = "varchar(20)", clean = "title"},
+  {pos = 18, name = "state", type = "char(2)", clean = "upper"},
+  {pos = 19, name = "zip_code", type = "char(9)"},
+  {pos = 20, name = "po_box", type = "varchar(20)"},
+  {pos = 21, name = "attn_line", type = "varchar(35)"},
+  {pos = 22, name = "sgin", type = "char(3)"},
+  {pos = 23, name = "frn", type = "char(10)"},
+  {pos = 24, name = "applicant_type_code", type = "char(1)"},
+  {pos = 25, name = "applicant_type_code_other", type = "char(40)"},
+  {pos = 26, name = "status_code", type = "char(1)"},
+  {pos = 27, name = "status_date", type = "date"},
+  {pos = 28, name = "three_7_ghz_license_type", type = "char(1)"},
+  {pos = 29, name = "linked_uid", type = "numeric(9,0)"},
+  {pos = 30, name = "linked_callsign", type = "char(10)"},
+]

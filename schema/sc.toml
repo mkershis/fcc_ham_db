@@ -1,0 +1,16 @@
+# Special conditions table (SC.DAT)
+table = "sc"
+source_file = "SC.DAT"
+indexes = ["uid", "callsign"]
+
+columns = [
+  {pos = 1, name = "record_type", type = "char(2)"},
+  {pos = 2, name = "uid", type = "numeric(9,0)"},
+  {pos = 3, name = "uls_file_number", type = "char(14)"},
+  {pos = 4, name = "ebf_number", type = "varchar(30)"},
+  {pos = 5, name = "callsign", type = "char(10)"},
+  {pos = 6, name = "special_cond_type", type = "char(1)"},
+  {pos = 7, name = "special_cond_code", type = "int"},
+  {pos = 8, name = "status_code", type = "char(1)"},
+  {pos = 9, name = "status_date", type = "date"},
+]

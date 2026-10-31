@@ -1,0 +1,15 @@
+# Attachments table (LA.DAT)
+table = "la"
+source_file = "LA.DAT"
+indexes = ["uid", "callsign"]
+
+columns = [
+  {pos = 1, name = "record_type", type = "char(2)"},
+  {pos = 2, name = "uid", type = "numeric(9,0)"},
+  {pos = 3, name = "callsign", type = "char(10)"},
+  {pos = 4, name = "attach_code", type = "char(1)"},
+  {pos = 5, name = "attach_desc", type = "varchar(60)"},
+  {pos = 6, name = "attach_date", type = "date"},
+  {pos = 7, name = "attach_filename", type = "varchar(60)"},
+  {pos = 8, name = "action_performed", type = "char(1)"},
+]

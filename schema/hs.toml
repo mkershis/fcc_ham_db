@@ -1,0 +1,13 @@
+# History table (HS.DAT)
+table = "hs"
+source_file = "HS.DAT"
+indexes = ["uid", "callsign"]
+
+columns = [
+  {pos = 1, name = "record_type", type = "char(2)"},
+  {pos = 2, name = "uid", type = "numeric(9,0)"},
+  {pos = 3, name = "uls_file_number", type = "char(14)"},
+  {pos = 4, name = "callsign", type = "char(10)"},
+  {pos = 5, name = "log_date", type = "date"},
+  {pos = 6, name = "code", type = "char(6)"},
+]

@@ -1,0 +1,15 @@
+# Comments table (CO.DAT)
+table = "co"
+source_file = "CO.DAT"
+indexes = ["uid", "callsign"]
+
+columns = [
+  {pos = 1, name = "record_type", type = "char(2)"},
+  {pos = 2, name = "uid", type = "numeric(9,0)"},
+  {pos = 3, name = "uls_file_number", type = "char(14)"},
+  {pos = 4, name = "callsign", type = "char(10)"},
+  {pos = 5, name = "comment_date", type = "date"},
+  {pos = 6, name = "description", type = "varchar(255)"},
+  {pos = 7, name = "status_code", type = "char(1)"},
+  {pos = 8, name = "status_date", type = "date"},
+]
