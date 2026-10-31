@@ -21,8 +21,9 @@ _MAX_INT = 2_147_483_647  # the largest value of the `int` type
 def _validated_expression(column: Column, src: str) -> str:
     """SQL that converts a raw text value to its declared type, or NULL if it doesn't fit.
 
-    Surrounding whitespace is trimmed and an empty value is NULL. No
-    normalisation is applied; see :func:`clean_expression`.
+    Surrounding whitespace is trimmed and an empty value is NULL. The
+    ``zip5`` rule also decides validity here (only 5 or 9 characters are
+    valid). No other normalisation is applied; see :func:`clean_expression`.
 
     Raises:
         ValueError: The column's type has no conversion defined.
@@ -30,6 +31,8 @@ def _validated_expression(column: Column, src: str) -> str:
     v = f"NULLIF(TRIM({src}.\"{column.name}\"), '')"
     kind, length, precision, scale = column.type.kind, column.type.length, column.type.precision, column.type.scale
 
+    if kind in ('char', 'varchar') and column.clean == 'zip5':
+        return f'CASE WHEN LENGTH({v}) IN (5, 9) AND LENGTH({v}) <= {length} THEN {v} END'
     if kind in ('char', 'varchar'):
         return f'CASE WHEN LENGTH({v}) <= {length} THEN {v} END'
     if kind == 'date':
@@ -63,7 +66,14 @@ def clean_expression(column: Column, src: str, normalise: bool = True) -> str:
         return f'title_case({expr})'
     if normalise and column.clean == 'upper':
         return f'UPPER({expr})'
+    if normalise and column.clean == 'zip5':
+        return f'SUBSTR({expr}, 1, 5)'  # a valid 9-character ZIP+4 is cut to its 5-digit ZIP
     return expr
+
+
+def expected_type(column: Column) -> str:
+    """How a column's requirement is described in ``silver_dq_rejects``."""
+    return 'zip5 (5 or 9 chars)' if column.clean == 'zip5' else str(column.type)
 
 
 def create_table_sql(schema: TableSchema, target: str) -> str:
@@ -94,7 +104,7 @@ def insert_select_sql(schema: TableSchema, target: str) -> str:
 def rejects_sql(schema: TableSchema) -> str:
     """``INSERT`` statement logging every non-empty raw value that converts to NULL."""
     selects = '\nUNION ALL\n'.join(
-        f"SELECT '{schema.table}', '{c.name}', CAST(b.\"uid\" AS TEXT), b.\"{c.name}\", '{c.type}'\n"
+        f"SELECT '{schema.table}', '{c.name}', CAST(b.\"uid\" AS TEXT), b.\"{c.name}\", '{expected_type(c)}'\n"
         f'FROM "{SOURCE_LAYER}_{schema.table}" AS b\n'
         f"WHERE NULLIF(TRIM(b.\"{c.name}\"), '') IS NOT NULL "
         f"AND ({clean_expression(c, 'b', normalise=False)}) IS NULL"
