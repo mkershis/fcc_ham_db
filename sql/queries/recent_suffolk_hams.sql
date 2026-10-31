@@ -1,6 +1,14 @@
 -- Hams in Suffolk County, NY granted a license in the last :days_back days.
 -- Usage: python fcc_ham_db.py --query recent_suffolk_hams --param days_back=90
-SELECT * FROM gold_summary
+SELECT
+    callsign
+    ,COALESCE(first_name || ' ' || last_name, entity_name) AS name
+    ,operator_class
+    ,COALESCE(address, 'P.O. Box ' || po_box) AS address
+    ,city
+    ,zip_code
+    ,grant_date
+FROM gold_summary
 WHERE state = 'NY'
 AND zip_code IN (
     '00501', '00544', '06390', '11701', '11702', '11703', '11704', '11705',

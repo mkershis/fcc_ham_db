@@ -15,6 +15,8 @@ Examples:
 """
 
 import argparse
+import shutil
+import sys
 import time
 from pathlib import Path
 
@@ -63,10 +65,28 @@ def parse_params(pairs: list[str]) -> dict[str, int | float | str]:
     return params
 
 
+def fit_widths(widths: list[int], available: int, gap: int = 2, minimum: int = 8) -> list[int]:
+    """Narrow the widest columns, one character at a time, until the table fits ``available`` characters."""
+    widths = list(widths)
+    excess = sum(widths) + gap * (len(widths) - 1) - available
+    while excess > 0 and max(widths) > minimum:
+        widths[widths.index(max(widths))] -= 1
+        excess -= 1
+    return widths
+
+
 def print_table(columns: list[str], rows: list[tuple]) -> None:
-    """Print query results as an aligned text table."""
+    """Print query results as an aligned text table.
+
+    On a terminal, wide tables are shortened (cut values end in "..") to fit
+    the window. Output that is piped or redirected is never cut.
+    """
     cells = [['' if v is None else str(v) for v in row] for row in rows]
     widths = [max([len(name)] + [len(r[i]) for r in cells]) for i, name in enumerate(columns)]
+    if sys.stdout.isatty():
+        widths = fit_widths(widths, shutil.get_terminal_size().columns)
+        cells = [[v if len(v) <= w else v[:w - 2] + '..' for v, w in zip(row, widths)] for row in cells]
+        columns = [n if len(n) <= w else n[:w - 2] + '..' for n, w in zip(columns, widths)]
     print('  '.join(name.ljust(w) for name, w in zip(columns, widths)))
     print('  '.join('-' * w for w in widths))
     for row in cells:
