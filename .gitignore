@@ -53,3 +53,6 @@ data/
 
 # MCP (local only)
 mcp/
+
+# Local scripts
+map_hams.py
