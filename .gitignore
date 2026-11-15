@@ -50,3 +50,6 @@ Thumbs.db
 # Local data and databases
 data/
 *.db
+
+# MCP (local only)
+mcp/
